@@ -34,6 +34,12 @@ int main(){
     int *a; //pointer to the array
     float average;
 
+    int *ptr = (int *)malloc(5 * sizeof(int)); // Allocates memory for 5 integers
+    ptr = (int *)realloc(ptr, 10 * sizeof(int)); // Resizes to hold 10 integers, copies allexisting data to a new memory block
+    
+
+
+ 
     printf("Enter the number of elements: ");
     scanf("%d", &N);
 
@@ -86,11 +92,39 @@ void example() {
 //Write a function to calculate the factorial of a number using recursion. Track how local variables are stored during each recursive call.
 }
 
+void Heap(){
 
 
+    //Used for dynamic memory allocation (via malloc, calloc, realloc)
+    //The programmer must manage this memory (allocate and free it)
+    //Slower but can grow as needed (within system limits)
 
 
+    int *p = (int *)malloc(sizeof(int)); // Stored in the heap !
 
+}
+
+void LocalStack(){
+
+
+    //Used for variables with local scope (e.g., inside functions).
+    //Memory is automatically allocated and deallocated when the function is called and exited.
+    //Fast but limited in size.
+    int x = 10; // Stored in the stack
+
+
+}
+
+
+void GlobalData(){
+
+    //Advantages of Global Data:Easy to access across different parts of the program.
+    // Useful for storing configuration settings or state information shared across functions.
+ int GlobalVar = 34;
+ //if this global var was outside the function it is a global variable 
+
+
+}
 
 
 
