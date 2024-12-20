@@ -53,17 +53,6 @@ void display_farm(struct Farm *farm);
 void displayFarmDetails(Farm *farm);
 
 int main() {
-
-    //unit testing
-
-   struct Cow *jon_cow = add_cow("Jon");
-   milk_cow(jon_cow, 5);
-   struct Cow *len_cow = add_cow("Len");
-   milk_cow(jon_cow, 10);
-   jon_cow = kill_cow("Jon");
-   printf("Deceased cow %s produced: %d liters\n", jon_cow->name, jon_cow->liters);
-    
-
     int choice;
     while (1) { //infinite loop until the user decides to break
         printf("\nCity Farms Management System\n");
@@ -98,31 +87,33 @@ int main() {
     return 0;
 }
 
-void kill_chicken(struct Farm *farm, char *name) {
+void kill_chicken( Farm *farm, char *name) {
     struct Chicken *current = farm->chickens; //to start at the head of the list
-    struct Chicken *previous = NULL;          // to keep track of the previous node
+    struct Chicken *previous = NULL;          // To keep track of the previous node
 
+    // Traverse the list to find the chicken
     while (current != NULL) {
-        if (strcmp(current->name, name) == 0) { // strcmp checks if the names match
+        if (strcmp(current->name, name) == 0) { // If names match
             if (previous == NULL) {
-                
+                // Removing the head node
                 *farm->chickens = current->next;
             } else {
+                // Skip the current node
                 previous->next = current->next;
             }
 
             printf("Removed chicken: %s\n", current->name);
-            free(current); //free the memory of the removed chicken
-            return;        
+            free(current); // Free the removed chicken
+            return;        // Exit the function
         }
         previous = current;
-        current = current->next; //move to the next
+        current = current->next; // Move to the next node
     }
 
     printf("Chicken named '%s' not found.\n", name);
 }
 
-void kill_cow(struct Farm *farm, char *name){
+void kill_cow( Farm *farm, char *name){
     struct Cow *current = farm->cows;
     struct Cow *previous = NULL;
     while(current != NULL){
@@ -142,7 +133,7 @@ void kill_cow(struct Farm *farm, char *name){
     }
 }
 
-void kill_chickens(struct Farm *farm, int num) {
+void kill_chickens( Farm *farm, int num) {
     if (num > farm->chickens) {
         printf("Not enough chickens to remove.\n");
         return;
@@ -151,7 +142,7 @@ void kill_chickens(struct Farm *farm, int num) {
     printf("%d chickens removed from the farm.\n", num);
 }
 
-void kill_cows(struct Farm *farm, int num) {
+void kill_cows( Farm *farm, int num) {
     if (num > farm->cows) {
         printf("Not enough cows to remove.\n");
         return;
@@ -161,7 +152,7 @@ void kill_cows(struct Farm *farm, int num) {
 }
 
 
-struct Cow* add_cow(struct Farm *farm, char *name) {
+struct Cow* add_cow( Farm *farm, char *name) {
     struct Cow *new_cow = (struct Cow*)malloc(sizeof(struct Cow));
     if (new_cow == NULL) {
         printf("Memory allocation failed.\n");
@@ -170,13 +161,13 @@ struct Cow* add_cow(struct Farm *farm, char *name) {
     strcpy(new_cow->name, name);
     new_cow->liters_produced = 0;
     new_cow->gr_eaten = 0;
-    new_cow->next = farm->cows;  
-    farm->cows = new_cow;
-    farm->cows++;  
+    farm->cows++;  // Increment count
+    new_cow->next = farm->cows  // Maintain linked list
+    farm->cows = new_cow;  // Update head of the list
     return new_cow;
 }
 
-struct Chicken* add_chicken(struct Farm *farm, char *name) {
+struct Chicken* add_chicken( Farm *farm, char *name) {
     struct Chicken *new_chicken = (struct Chicken*)malloc(sizeof(struct Chicken));
     if (new_chicken == NULL) {
         printf("memory allocation failed.\n");
@@ -189,6 +180,34 @@ struct Chicken* add_chicken(struct Farm *farm, char *name) {
     farm->chickens = new_chicken;
     farm->chickens++;  
     return new_chicken;
+}
+
+
+
+void milk_cow( Farm *farm,struct Cow *next, char *name, int liters){
+     struct Cow *current = farm->cows;
+while (current != NULL) {
+    if (strcmp(current->name, name) == 0) {//if the names match
+        current->liters_produced += liters;
+        return;
+    }
+    current = current->next;
+}
+printf("Cow named '%s' not found.\n", name);
+}
+
+
+void collected_eggs(Farm *farm,struct Chicken *next, char *name,int eggs ){
+    struct Chicken *current = farm->chickens;
+while(current != NULL){
+    if(strcmp(current->name,name)==0){//if the names match
+       current->eggs_layed +=eggs;
+       return;
+}
+   current = current->next;
+}
+
+printf("chicken names '%s' not found.\n",name);
 }
 
 void displayFarmDetails(Farm *farm) { 
