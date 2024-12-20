@@ -53,36 +53,67 @@ void display_farm(struct Farm *farm);
 void displayFarmDetails(Farm *farm);
 
 int main() {
-    int choice;
-    while (1) { //infinite loop until the user decides to break
-        printf("\nCity Farms Management System\n");
-        printf("1. Choose a farm\n");
-        printf("2. Exit\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
+    // farm for testing
+    Farm testFarm = {"Test Farm", 0, 0, 0.0, NULL, NULL};
 
-        if (choice == 2) {
-            printf("Exiting...\n");
-            break;
-        } else if (choice == 1) {
-            int farmIndex;
-            printf("Select a farm (1-5): ");
-            scanf("%d", &farmIndex); //ask for farm,scan the input into the farm_index
+    printf("testing start\n");
 
-            if (farmIndex < 1 || farmIndex > 5) {
-                printf("Invalid farm selection.\n");
-                continue;
-            }
-
-            Farm *selectedFarm = &farms[farmIndex - 1]; //selectedfarm is a pointer to specific farm in Farm struct
-
-            displayFarmDetails(selectedFarm);
-
-            
-        } else {
-            printf("Invalid choice. Try again.\n");
-        }
+    // test: adding cows
+    struct Cow* cow1 = add_cow(&testFarm, "Jon");
+    struct Cow* cow2 = add_cow(&testFarm, "Sharon");
+    if (cow1 && cow2) {
+        printf("Cows added: %s, %s\n", cow1->name, cow2->name); //after adding to the struct we acces the name using pointer
+    } else {
+        printf("Failed to add cows.\n");
     }
+
+    // test: adding chickens
+    printf("\n** Testing Add Chicken **\n");
+    struct Chicken* chicken1 = add_chicken(&testFarm, "Ella");
+    struct Chicken* chicken2 = add_chicken(&testFarm, "Karin");
+    if (chicken1 && chicken2) {
+        printf("Chickens added: %s, %s\n", chicken1->name, chicken2->name); //same as with the cows
+    } else {
+        printf("Failed to add chickens.\n");
+    }
+
+    // test: milk cow
+    printf("\n** Testing Milk Cow **\n");
+    milk_cow(cow1, 5);  // Cow jon produces 5 liters
+    milk_cow(cow2, 3); // Cow sharon produces 3 liters
+    printf("%s produced %d liters.\n", cow1->name, cow1->liters_produced); //accesing the values inside the struct COW.
+    printf("%s produced %d liters.\n", cow2->name, cow2->liters_produced);
+
+    // Test collect eggs
+    printf("\n** Testing Collect Eggs **\n");
+    collect_eggs(chicken1, 3);  //chicken Ella lays 3 eggs
+    collect_eggs(chicken2, 5);  //chicken Karin lays 5 eggs
+    printf("%s laid %d eggs.\n", chicken1->name, chicken1->eggs_layed); //same as with the cows-above
+    printf("%s laid %d eggs.\n", chicken2->name, chicken2->eggs_layed);
+
+    // removing cows
+    kill_cow(&testFarm, "Jon");
+    struct Cow* currentCow = testFarm.cows; //accesing the cows in the farm
+    printf("Remaining cows:\n");
+    while (currentCow != NULL) {
+        printf("Cow name: %s\n", currentCow->name);
+        currentCow = currentCow->next; //we do this to make the pointer to the next item in the struct
+    }
+
+    // removing chickens
+    kill_chicken(&testFarm, "Karin");
+    struct Chicken* currentChicken = testFarm.chickens;
+    printf("remaining chickens:\n");
+    while (currentChicken != NULL) {
+        printf("chticken name: %s\n", currentChicken->name);
+        currentChicken = currentChicken->next;
+    }
+
+    // displaying all the changes
+    printf("\n** Final Farm Details **\n");
+    display_farm(&testFarm);
+
+    printf(" end of testing \n");
 
     return 0;
 }
@@ -137,8 +168,17 @@ void kill_chickens( Farm *farm, int num) {
     if (num > farm->chickens) {
         printf("Not enough chickens to remove.\n");
         return;
+        struct Chicken *current = farm->cows;
+    while (num > 0 && current != NULL) {
+        chicken_now = current;           // storing teh chicken to remove
+        current = current->next;        // moving to the next
+        free(chicken_now);              // free the memory
+        farm->cows-=num;       
+        ;
     }
-    farm->chickens -= num;
+    printf("%d cows removed from the farm.\n", num);
+    
+    }
     printf("%d chickens removed from the farm.\n", num);
 }
 
@@ -147,8 +187,16 @@ void kill_cows( Farm *farm, int num) {
         printf("Not enough cows to remove.\n");
         return;
     }
-    farm->cows -= num;
+    struct Cow *current = farm->cows;
+    while (num > 0 && current != NULL) {
+        cow_now = current;           // storng the cow to remove
+        current = current->next;    // moving to the next
+        free(cow_now);              // free the memory
+        farm->cows-=num;       
+        ;
+    }
     printf("%d cows removed from the farm.\n", num);
+    
 }
 
 
