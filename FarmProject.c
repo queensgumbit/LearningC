@@ -16,7 +16,7 @@ typedef struct Chicken{
     char name[50];
     int eggs_layed;
     int gr_eaten;
-    struct Chicken *next
+    struct Chicken *next;
 };
 
 typedef struct {
@@ -39,8 +39,7 @@ typedef struct {
 
 struct Chicken* add_chicken(struct Farm *farm, char *name);
 struct Cow* add_cow(struct Farm *farm, char *name);
-struct Chicken* remove_chicken(struct Farm *farm, char *name);
-struct Cow* remove_cow(struct Farm *farm, char *name);
+
 void milk_cow(struct Cow *cow, int liters);
 void collect_eggs(struct Chicken *chicken, int eggs);
 void display_farm(struct Farm *farm);
