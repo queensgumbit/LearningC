@@ -6,7 +6,8 @@ typedef struct Cow {
     char name[50];
     int liters_produced;
     int gr_eaten;
-    struct Cow *next;
+    struct Cow *next;//pointer to the next cow
+    struct Cow *prev;//pointer to the previous cow
 
 
 
@@ -16,7 +17,8 @@ typedef struct Chicken{
     char name[50];
     int eggs_layed;
     int gr_eaten;
-    struct Chicken *next;
+    struct Chicken *next;//pointer to the next chicken
+    struct Chicken *prev;//pointer to the previous chicken
 };
 
 typedef struct {
@@ -39,7 +41,8 @@ typedef struct {
 
 struct Chicken* add_chicken(struct Farm *farm, char *name);
 struct Cow* add_cow(struct Farm *farm, char *name);
-
+struct Chicken* remove_chicken(struct Farm *farm, char *name);
+struct Cow* remove_cow(struct Farm *farm, char *name);
 void milk_cow(struct Cow *cow, int liters);
 void collect_eggs(struct Chicken *chicken, int eggs);
 void display_farm(struct Farm *farm);
@@ -118,84 +121,130 @@ int main() {
 }
 
 void kill_chicken( Farm *farm, char *name) {
-    struct Chicken *current = farm->chickens; //to start at the head of the list
-    struct Chicken *previous = NULL;          // To keep track of the previous node
+    struct Chicken *current = farm->chickens;
 
-    // Traverse the list to find the chicken
+    //while current exists(not null),search for the chicken by name.(strcmp checks if input is equall)
     while (current != NULL) {
-        if (strcmp(current->name, name) == 0) { // If names match
-            if (previous == NULL) {
-                // Removing the head node
-                *farm->chickens = current->next;
+        if (strcmp(current->name, name) == 0) {  // chicken found
+            //updating the previous node to be the next-if its not null
+            if (current->prev != NULL) {
+                current->prev->next = current->next;
             } else {
-                // Skip the current node
-                previous->next = current->next;
+                // if null-no previous node
+                farm->chickens = current->next;
             }
 
-            printf("Removed chicken: %s\n", current->name);
-            free(current); // Free the removed chicken
-            return;        // Exit the function
-        }
-        previous = current;
-        current = current->next; // Move to the next node
-    }
-
-    printf("Chicken named '%s' not found.\n", name);
-}
-
-void kill_cow( Farm *farm, char *name){
-    struct Cow *current = farm->cows;
-    struct Cow *previous = NULL;
-    while(current != NULL){
-        if(strcmp(current->name,name)==0){
-            if(previous ==NULL){
-                *farm->chickens = current->next;
+            // Update the next node's `prev` pointer (if it exists)
+            if (current->next != NULL) {
+                current->next->prev = current->prev;
             }
-            else{
-                previous->next = current->next;
-            }
-            printf("removed cow: %s\n",current->name);
+
+            //free memory for the deleted cow
             free(current);
+            farm->chickens--;  // -1 to chickens count
+            printf("Removed chicken: %s\n", name);
             return;
         }
-        previous = current;
-        current = current ->next;
+        current = current->next;  //moving to the next cow
     }
+
+    printf("chicken named '%s' not found.\n", name);
 }
 
-void kill_chickens( Farm *farm, int num) {
+void kill_cow(Farm *farm, char *name) {
+    struct Cow *current = farm->cows;
+
+    //while current exists(not null),search for the cow by name.(strcmp checks if input is equall)
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) {  // Cow found
+            //updating the previous node to be the next-if its not null
+            if (current->prev != NULL) {
+                current->prev->next = current->next;
+            } else {
+                // if null-no previous node
+                farm->cows = current->next;
+            }
+
+            // Update the next node's `prev` pointer (if it exists)
+            if (current->next != NULL) {
+                current->next->prev = current->prev;
+            }
+
+            //free memory for the deleted cow
+            free(current);
+            farm->cows--;  // -1 to cows count
+            printf("Removed cow: %s\n", name);
+            return;
+        }
+        current = current->next;  //moving to the next cow
+    }
+
+    printf("Cow named '%s' not found.\n", name);
+}
+
+void kill_chickens(Farm *farm, int num) {
     if (num > farm->chickens) {
         printf("Not enough chickens to remove.\n");
         return;
-        struct Chicken *current = farm->cows;
+    }
+
+    struct Chicken *current = farm->next; 
+    struct Chicken *chicken_now;
+
     while (num > 0 && current != NULL) {
-        chicken_now = current;           // storing teh chicken to remove
-        current = current->next;        // moving to the next
-        free(chicken_now);              // free the memory
-        farm->cows-=num;       
-        ;
+        chicken_now = current;           //storing the chicken to remove
+        current = current->next;         //moving the current to next->moving to the next chicken
+        
+        if (chicken_now->prev != NULL) {
+            chicken_now->prev->next = chicken_now->next; //updating the previous node the next pointer
+        }
+        if (chicken_now->next != NULL) {
+            chicken_now->next->prev = chicken_now->prev; // Update the next node's prev pointer
+        }
+//need to sort out how to acces the head of the list: chicken_first
+        if (farm->chickens_first == chicken_now) {
+            farm->chickens_first = current; // update the first chicken in the list
+        }
+
+        free(chicken_now);                // free the memory
+        farm->chickens--;                 // -1 to count of chickens
+        num--;                            // -1 to the number of chickens to remove
     }
-    printf("%d cows removed from the farm.\n", num);
-    
-    }
-    printf("%d chickens removed from the farm.\n", num);
+
+    printf("%d chickens removed from the farm.\n  ", num);
 }
 
-void kill_cows( Farm *farm, int num) {
+void kill_cows(Farm *farm, int num) {
     if (num > farm->cows) {
-        printf("Not enough cows to remove.\n");
+        printf("Not enough cows to remove.\n ");
         return;
     }
-    struct Cow *current = farm->cows;
+//same as with chickens - need to sort out how to acces the head of the list: cow_first
+
+    struct Cow *current = farm->cows_first; 
+    struct Cow *cow_now;
+
     while (num > 0 && current != NULL) {
-        cow_now = current;           // storng the cow to remove
-        current = current->next;    // moving to the next
-        free(cow_now);              // free the memory
-        farm->cows-=num;       
-        ;
+        cow_now = current;            // storing the cow to remove
+        current = current->next;      // moving to the next cow
+
+        if (cow_now->prev != NULL) {
+            cow_now->prev->next = cow_now->next; 
+        }
+        if (cow_now->next != NULL) {
+            cow_now->next->prev = cow_now->prev; /
+        }
+
+        if (farm->cow_first == cow_now) {
+            farm->cow_first = current;
+        }
+
+        free(cow_now);                // free memory
+        farm->cows--;                 // -1 to count of cows
+        num--;                        //-1 to the number of cows to remove(till num!>0 meaning till num==0)
     }
-    printf("%d cows removed from the farm.\n", num);
-    
+
+    printf("%d cows removed from the farm.\n  ", num);
 }
 
 
@@ -205,27 +254,43 @@ struct Cow* add_cow( Farm *farm, char *name) {
         printf("Memory allocation failed.\n");
         return NULL;
     }
-    strcpy(new_cow->name, name);
+     strcpy(new_cow->name, name);
     new_cow->liters_produced = 0;
     new_cow->gr_eaten = 0;
-    farm->cows++;  // Increment count
-    new_cow->next = farm->cows  // Maintain linked list
-    farm->cows = new_cow;  // Update head of the list
+    new_cow->next = farm->cows;  // point to the current first node(of the list)
+    new_cow->prev = NULL;        //no prevoius node.
+    //if the list is not empty, update the current head's `prev` pointer.(meaning theres a new head and the new_cow is the prev)
+    if (farm->cows != NULL) {
+        farm->cows->prev = new_cow;
+    }
+
+    // update the head of the cows list to new_cow
+    farm->cows = new_cow;
+    farm->cows++;  //+1 to cows count
+
     return new_cow;
 }
 
 struct Chicken* add_chicken( Farm *farm, char *name) {
     struct Chicken *new_chicken = (struct Chicken*)malloc(sizeof(struct Chicken));
     if (new_chicken == NULL) {
-        printf("memory allocation failed.\n");
+        printf("Memory allocation failed.\n");
         return NULL;
     }
-    strcpy(new_chicken->name, name);
+     strcpy(new_chicken->name, name);
     new_chicken->eggs_layed = 0;
     new_chicken->gr_eaten = 0;
-    new_chicken->next = farm->chickens;  
-    farm->chickens = new_chicken;
-    farm->chickens++;  
+    new_chicken->next = farm->cows;  // point to the current first node(of the list)
+    new_chicken->prev = NULL;        //no prevoius node.
+    //if the list is not empty, update the current head's `prev` pointer.(meaning theres a new head and the new_cow is the prev)
+    if (farm->cows != NULL) {
+        farm->cows->prev = new_chicken;
+    }
+
+    // update the head of the cows list to new_cow
+    farm->cows = new_chicken;
+    farm->cows++;  //+1 to cows count
+
     return new_chicken;
 }
 
