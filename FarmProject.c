@@ -136,7 +136,7 @@ void kill_chicken( Farm *farm, char *name) {
 
             // Update the next node's `prev` pointer (if it exists)
             if (current->next != NULL) {
-                current->next->prev = current->prev;
+                current->next->prev = current->prev; //updating the prev pointer of the next node -ensure the node that being removed (current) is no longer referenced in the list.
             }
 
             //free memory for the deleted cow
