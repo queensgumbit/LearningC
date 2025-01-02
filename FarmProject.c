@@ -188,7 +188,7 @@ void kill_chickens(Farm *farm, int num) {
         return;
     }
 
-    struct Chicken *current = farm->next; 
+    struct Chicken *current = farm->chickens; 
     struct Chicken *chicken_now;
 
     while (num > 0 && current != NULL) {
@@ -202,8 +202,8 @@ void kill_chickens(Farm *farm, int num) {
             chicken_now->next->prev = chicken_now->prev; // Update the next node's prev pointer
         }
 //need to sort out how to acces the head of the list: chicken_first
-        if (farm->chickens_first == chicken_now) {
-            farm->chickens_first = current; // update the first chicken in the list
+        if (farm->chickens == chicken_now) {
+            farm->chickens = current; // update the first chicken in the list
         }
 
         free(chicken_now);                // free the memory
@@ -219,9 +219,9 @@ void kill_cows(Farm *farm, int num) {
         printf("Not enough cows to remove.\n ");
         return;
     }
-//same as with chickens - need to sort out how to acces the head of the list: cow_first
+//same as with chickens - need to sort out how to acces the head of the list: chicken_first
 
-    struct Cow *current = farm->cows_first; 
+    struct Cow *current = farm->cows; 
     struct Cow *cow_now;
 
     while (num > 0 && current != NULL) {
@@ -235,8 +235,8 @@ void kill_cows(Farm *farm, int num) {
             cow_now->next->prev = cow_now->prev; /
         }
 
-        if (farm->cow_first == cow_now) {
-            farm->cow_first = current;
+        if (farm->cows == cow_now) {
+            farm->cows = current;
         }
 
         free(cow_now);                // free memory
@@ -277,19 +277,19 @@ struct Chicken* add_chicken( Farm *farm, char *name) {
         printf("Memory allocation failed.\n");
         return NULL;
     }
-     strcpy(new_chicken->name, name);
+     strcpy(new_chicken->name, name); // copy the value of the name string into the name field of the new_chicken structure.
     new_chicken->eggs_layed = 0;
     new_chicken->gr_eaten = 0;
-    new_chicken->next = farm->cows;  // point to the current first node(of the list)
+    new_chicken->next = farm->chickens;  // point to the current first node(of the list)
     new_chicken->prev = NULL;        //no prevoius node.
     //if the list is not empty, update the current head's `prev` pointer.(meaning theres a new head and the new_cow is the prev)
-    if (farm->cows != NULL) {
-        farm->cows->prev = new_chicken;
+    if (farm->chickens != NULL) {
+        farm->chickens->prev = new_chicken;
     }
 
     // update the head of the cows list to new_cow
-    farm->cows = new_chicken;
-    farm->cows++;  //+1 to cows count
+    farm->chickens = new_chicken;
+    farm->chickens++;  //+1 to cows count
 
     return new_chicken;
 }
@@ -303,7 +303,8 @@ while (current != NULL) {
         current->liters_produced += liters;
         return;
     }
-    current = current->next;
+    current = current->next; //in this function no need fot prev pointer, because we can do this with just next pointer.we dont modify or change the list.
+
 }
 printf("Cow named '%s' not found.\n", name);
 }
@@ -316,11 +317,39 @@ while(current != NULL){
        current->eggs_layed +=eggs;
        return;
 }
-   current = current->next;
+   current = current->next; //in this function no need fot prev pointer, because we can do this with just next pointer.we dont modify or change the list.
 }
 
 printf("chicken names '%s' not found.\n",name);
 }
+
+
+void gr_eaten(Farm *farm,char animal,char *name,int gr){
+    if(strcmp(animal,"cow")==0){
+        struct Cow *currentCow = farm->cows;
+        while(currentCow!=NULL){
+            if(strcmp(currentCow->name,name)==0){
+                currentCow->gr_eaten+=gr;
+                return;
+            }
+        currentCow=currentCow->next;
+
+        }
+
+
+    else if(strcmp(animal,"chicken")==0){
+        struct Chicken *currentChicken = farm->chickens;
+        while(currentChicken!=NULL){
+            if(strcmp(currentChicken->name,name)==0){
+                currentChicken->gr_eaten+=gr;
+                return;
+            }
+        currentChicken=currentChicken->next;
+
+        }
+    }
+}
+
 
 void displayFarmDetails(Farm *farm) { 
     printf("\nFarm: %s\n", farm->name); //farm is a pointer  "->" acceses the firls of the struct the farm pointer is pointing to
