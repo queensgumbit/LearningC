@@ -9,9 +9,29 @@ typedef struct _LIST_ENTRY {
   struct _LIST_ENTRY *Blink;
 } LIST_ENTRY, *PLIST_ENTRY, PRLIST_ENTRY;
 
+#define CONTAINING_RECORD(address, type, field) (\
+    (type *)((char*)(address) -(unsigned long)(&((type *)0)->field)))
+
+
+void InitializeListHead( PLIST_ENTRY ListHead)
+ {
+   ListHead->Flink = ListHead->Blink = ListHead;
+ }
+
+
+ void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry)
+{
+    PLIST_ENTRY Flink;
+
+    Flink = ListHead->Flink;
+    Entry->Flink = Flink;
+    Entry->Blink = ListHead;
+    Flink->Blink = Entry;
+    ListHead->Flink = Entry;
+}
+
 typedef struct Cow {
-     struct Cow *next;
-    struct Cow *prev; 
+    LIST_ENTRY ListEntry;   
     char name[50];
     int liters_produced;
     int gr_eaten;
@@ -19,8 +39,7 @@ typedef struct Cow {
 } Cow;
 
 typedef struct Chicken {
-    struct Chicken *next; 
-    struct Chicken *prev; 
+    LIST_ENTRY ListEntry;   
     char name[50];
     int eggs_layed;
     int gr_eaten;
@@ -28,14 +47,20 @@ typedef struct Chicken {
 } Chicken;
 
 typedef struct {
-    Cow *cow_list;         
-    Chicken *chicken_list; 
+    LIST_ENTRY CowList;     
+    LIST_ENTRY ChickenList;
     char name[50];
     int cow_count;
     int chicken_count;
     float income;
     
 } Farm;
+
+
+
+
+
+
 
 Cow* add_cow(Farm *farm, const char *name);
 Chicken* add_chicken(Farm *farm, const char *name);
@@ -56,13 +81,16 @@ Cow* add_cow(Farm *farm, const char *name) {
     strcpy(new_cow->name, name);
     new_cow->liters_produced = 0;
     new_cow->gr_eaten = 0;
-    new_cow->next = farm->cow_list;
-    new_cow->prev = NULL;
+    new_cow->ListEntry.Flink = farm->CowList.Flink;
+    new_cow->ListEntry.Blink = &farm->CowList;
 
-    if (farm->cow_list != NULL) {
-        farm->cow_list->prev = new_cow;
+    if (farm->CowList) {
+        farm->CowList->ListEntry.Blink = new_cow;
     }
-    farm->cow_list = new_cow;
+    
+    InsertHeadList(&farm->CowList, &new_cow->ListEntry);
+
+    farm->CowList = new_cow;
     farm->cow_count++;
     return new_cow;
 }
@@ -78,31 +106,34 @@ Chicken* add_chicken(Farm *farm, const char *name) {
     strcpy(new_chicken->name, name);
     new_chicken->eggs_layed = 0;
     new_chicken->gr_eaten = 0;
-    new_chicken->next = farm->chicken_list;
-    new_chicken->prev = NULL;
+    new_chicken->ListEntry.Flink = farm->ChickenList.Flink;
+    new_chicken->ListEntry.Blink = &farm->ChickenList.Blink;
 
-    if (farm->chicken_list != NULL) {
-        farm->chicken_list->prev = new_chicken;
+    if (farm->ChickenList) {
+        farm->ChickenList->ListEntry.Blink = new_chicken;
     }
-    farm->chicken_list = new_chicken;
+    
+    InsertHeadList(&farm->ChickenList, &new_chicken->ListEntry);
+   
+    farm->ChickenList = new_chicken;
     farm->chicken_count++;
     return new_chicken;
 }
 
 //remove a cow from the farm(by name)
 void remove_cow(Farm *farm, const char *name) {
-    Cow *current = farm->cow_list;
+    Cow *current = farm->CowList;
 
     while (current != NULL) {
         if (strcmp(current->name, name) == 0) {
-            if (current->prev) {
-                current->prev->next = current->next;
+            if (current->ListEntry.Blink) {
+                current->ListEntry.Blink->Flink = current->ListEntry.Flink;
             } else {
-                farm->cow_list = current->next; //update head if its the first node
+                farm->CowList = current->ListEntry.Flink; //update head if its the first node
             }
 
-            if (current->next) {
-                current->next->prev = current->prev;
+            if (current->ListEntry.Flink) {
+                current->ListEntry.Flink->Blink = current->ListEntry.Blink;
             }
 
             free(current);
@@ -110,25 +141,25 @@ void remove_cow(Farm *farm, const char *name) {
             printf("Cow '%s' removed from the farm.\n", name);
             return;
         }
-        current = current->next;
+        current = current->ListEntry.Flink;
     }
     printf("Cow '%s' not found.\n", name);
 }
 
 // Remove a chicken from the farm by name
 void remove_chicken(Farm *farm, const char *name) {
-    Chicken *current = farm->chicken_list;
+    Chicken *current = farm->ChickenList;
 
     while (current != NULL) {
         if (strcmp(current->name, name) == 0) {
-            if (current->prev) {
-                current->prev->next = current->next;
+            if (current->ListEntry.Blink) {
+                current->ListEntry.Blink->ListEntry.Flink = current->ListEntry.Flink;
             } else {
-                farm->chicken_list = current->next; 
+                farm->ChickenList = current->ListEntry.Flink; 
             }
 
-            if (current->next) {
-                current->next->prev = current->prev;
+            if (current->ListEntry.Flink) {
+                current->ListEntry.Flink->Blink = current->ListEntry.Blink;
             }
 
             free(current);
@@ -136,7 +167,7 @@ void remove_chicken(Farm *farm, const char *name) {
             printf("Chicken '%s' removed from the farm.\n", name);
             return;
         }
-        current = current->next;
+        current = current->ListEntry.Flink;
     }
     printf("Chicken '%s' not found.\n", name);
 }
@@ -158,41 +189,47 @@ void collect_eggs(Chicken *chicken, int eggs) {
 void display_farm(Farm *farm) {
     printf("\nFarm: %s\n", farm->name);
     printf("Cows (%d):\n", farm->cow_count);
-    Cow *current_cow = farm->cow_list;
+    Cow *current_cow = farm->CowList;
     while (current_cow != NULL) {
         printf("  - %s: %d liters produced, %d grams eaten\n", current_cow->name, current_cow->liters_produced, current_cow->gr_eaten);
-        current_cow = current_cow->next;
+        current_cow = current_cow->ListEntry.Flink;
     }
 
     printf("Chickens (%d):\n", farm->chicken_count);
-    Chicken *current_chicken = farm->chicken_list;
+    Chicken *current_chicken = farm->ChickenList;
     while (current_chicken != NULL) {
         printf("  - %s: %d eggs laid, %d grams eaten\n", current_chicken->name, current_chicken->eggs_layed, current_chicken->gr_eaten);
-        current_chicken = current_chicken->next;
+        current_chicken = current_chicken->ListEntry.Flink;
     }
 
     printf("Income: $%.2f\n", farm->income);
 }
 
 int main() {
-    Farm testFarm = {"Test Farm", 0, 0, 0.0, NULL, NULL};
+    Farm testFarm;
+    strcpy(testFarm.name, "Test Farm");
+    testFarm.cow_count = 0;
+    testFarm.chicken_count = 0;
+    testFarm.income = 0.0;
 
+    InitializeListHead(&testFarm.CowList);
+    InitializeListHead(&testFarm.ChickenList);
     add_cow(&testFarm, "Sharon");
     add_cow(&testFarm, "Karin");
 
     add_chicken(&testFarm, "Ella");
     add_chicken(&testFarm, "Yasmin");
 
-    milk_cow(testFarm.cow_list, 5);
-    milk_cow(testFarm.cow_list->next, 3);
+    milk_cow(testFarm.CowList, 5);
+    milk_cow(testFarm.CowList->Flink, 3);
 
-    collect_eggs(testFarm.chicken_list, 6);
-    collect_eggs(testFarm.chicken_list->next, 4);
+    collect_eggs(testFarm.ChickenList, 6);
+    collect_eggs(testFarm.ChickenList->Flink, 4);
 
     display_farm(&testFarm);
 
     remove_cow(&testFarm, "Sharon");
-    remove_chicken(&testFarm, "Karin");
+    remove_chicken(&testFarm, "Yasmin");
 
     display_farm(&testFarm);
 
