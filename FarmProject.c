@@ -10,7 +10,8 @@ typedef struct _LIST_ENTRY {
 } LIST_ENTRY, *PLIST_ENTRY, PRLIST_ENTRY;
 
 #define CONTAINING_RECORD(address, type, field) (\
-    (type *)((char*)(address) -(unsigned long)(&((type *)0)->field)))
+    (type *)((char*)(address) -(unsigned long)(&((type *)0)->field))) 
+    //so we need this to calculate the start adress of the struct - the adrees of List_Entry, in order to access a member of the struct
 
 
 void InitializeListHead( PLIST_ENTRY ListHead)
@@ -28,6 +29,26 @@ void InitializeListHead( PLIST_ENTRY ListHead)
     Entry->Blink = ListHead;
     Flink->Blink = Entry;
     ListHead->Flink = Entry;
+}
+
+_Must_inspect_result_
+bool FORCEINLINE
+IsListEmpty(_In_ const LIST_ENTRY * ListHead)          
+{
+    return (BOOLEAN)(ListHead->Flink == ListHead);
+}
+
+FORCEINLINE
+BOOLEAN RemoveEntryListUnsafe(_In_ PLIST_ENTRY Entry)
+{
+    PLIST_ENTRY Blink;
+    PLIST_ENTRY Flink;
+
+    Flink = Entry->Flink;
+    Blink = Entry->Blink;
+    Blink->Flink = Flink;
+    Flink->Blink = Blink;
+    return (BOOLEAN)(Flink == Blink);
 }
 
 typedef struct Cow {
@@ -124,7 +145,7 @@ Chicken* add_chicken(Farm *farm, const char *name) {
 void remove_cow(Farm *farm, const char *name) {
     Cow *current = farm->CowList;
 
-    while (current != NULL) {
+    while (current) {
         if (strcmp(current->name, name) == 0) {
             if (current->ListEntry.Blink) {
                 current->ListEntry.Blink->Flink = current->ListEntry.Flink;
@@ -150,7 +171,7 @@ void remove_cow(Farm *farm, const char *name) {
 void remove_chicken(Farm *farm, const char *name) {
     Chicken *current = farm->ChickenList;
 
-    while (current != NULL) {
+    while (current) {
         if (strcmp(current->name, name) == 0) {
             if (current->ListEntry.Blink) {
                 current->ListEntry.Blink->ListEntry.Flink = current->ListEntry.Flink;
@@ -220,11 +241,11 @@ int main() {
     add_chicken(&testFarm, "Ella");
     add_chicken(&testFarm, "Yasmin");
 
-    milk_cow(testFarm.CowList, 5);
-    milk_cow(testFarm.CowList->Flink, 3);
+    milk_cow(&testFarm.CowList, 5);
+    milk_cow(&testFarm.CowList->Flink, 3);
 
-    collect_eggs(testFarm.ChickenList, 6);
-    collect_eggs(testFarm.ChickenList->Flink, 4);
+    collect_eggs(&testFarm.ChickenList, 6);
+    collect_eggs(&testFarm.ChickenList->Flink, 4);
 
     display_farm(&testFarm);
 
