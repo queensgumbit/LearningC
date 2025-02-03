@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <ntddk.h>
 
 
 typedef struct _LIST_ENTRY {
@@ -38,7 +38,7 @@ IsListEmpty(_In_ const LIST_ENTRY * ListHead)
     return (BOOLEAN)(ListHead->Flink == ListHead);
 }
 
-FORCEINLINE
+FORCEINLINE 
 BOOLEAN RemoveEntryListUnsafe(_In_ PLIST_ENTRY Entry)
 {
     PLIST_ENTRY Blink;
@@ -56,7 +56,6 @@ typedef struct Cow {
     char name[50];
     int liters_produced;
     int gr_eaten;
-   
 } Cow;
 
 typedef struct Chicken {
@@ -68,17 +67,14 @@ typedef struct Chicken {
 } Chicken;
 
 typedef struct {
-    LIST_ENTRY CowList;     
-    LIST_ENTRY ChickenList;
+    LIST_ENTRY CowHead;  // head node of the cow list
+    LIST_ENTRY ChickenHead; //head node of the chicken list
     char name[50];
     int cow_count;
     int chicken_count;
     float income;
     
 } Farm;
-
-
-
 
 
 
@@ -143,52 +139,38 @@ Chicken* add_chicken(Farm *farm, const char *name) {
 
 //remove a cow from the farm(by name)
 void remove_cow(Farm *farm, const char *name) {
-    Cow *current = farm->CowList;
-
-    while (current) {
-        if (strcmp(current->name, name) == 0) {
-            if (current->ListEntry.Blink) {
-                current->ListEntry.Blink->Flink = current->ListEntry.Flink;
-            } else {
-                farm->CowList = current->ListEntry.Flink; //update head if its the first node
-            }
-
-            if (current->ListEntry.Flink) {
-                current->ListEntry.Flink->Blink = current->ListEntry.Blink;
-            }
-
-            free(current);
+    PLIST_ENTRY entry = farm->CowList.Flink;
+    while (entry != &farm->CowList) {
+        Cow *current_cow = CONTAINING_RECORD(entry, Cow, ListEntry); // we dont need to inizialize current cow before the loop, 
+        //we obtain a pointer to each cow stored in the list by using the CONTAINING_RECORD macro on the current LIST_ENTRY pointer. 
+        //we are setting it during each iteration based on the current list entry.
+        if (strcmp(current_cow->name, name) == 0) {
+            RemoveEntryListUnsafe(&current_cow->ListEntry); //removing the cow from the list
+            free(current_cow);
             farm->cow_count--;
             printf("Cow '%s' removed from the farm.\n", name);
             return;
         }
-        current = current->ListEntry.Flink;
+        entry = entry->Flink;
     }
     printf("Cow '%s' not found.\n", name);
 }
 
 // Remove a chicken from the farm by name
 void remove_chicken(Farm *farm, const char *name) {
-    Chicken *current = farm->ChickenList;
-
-    while (current) {
-        if (strcmp(current->name, name) == 0) {
-            if (current->ListEntry.Blink) {
-                current->ListEntry.Blink->ListEntry.Flink = current->ListEntry.Flink;
-            } else {
-                farm->ChickenList = current->ListEntry.Flink; 
-            }
-
-            if (current->ListEntry.Flink) {
-                current->ListEntry.Flink->Blink = current->ListEntry.Blink;
-            }
-
-            free(current);
+    PLIST_ENTRY entry = farm->ChickenList.Flink;
+    while (entry != &farm->CowList) {
+        Chicken *current_chicken = CONTAINING_RECORD(entry, Chicken, ListEntry); // we dont need to inizialize current cow before the loop, 
+        //we obtain a pointer to each cow stored in the list by using the CONTAINING_RECORD macro on the current LIST_ENTRY pointer. 
+        //we are setting it during each iteration based on the current list entry.
+        if (strcmp(current_chicken->name, name) == 0) {
+            RemoveEntryListUnsafe(&current_chicken->ListEntry); //removing the chiejn from the list
+            free(current_chicken);
             farm->chicken_count--;
-            printf("Chicken '%s' removed from the farm.\n", name);
+            printf("chicken '%s' removed from the farm.\n", name);
             return;
         }
-        current = current->ListEntry.Flink;
+        entry = entry->Flink;
     }
     printf("Chicken '%s' not found.\n", name);
 }
@@ -241,11 +223,11 @@ int main() {
     add_chicken(&testFarm, "Ella");
     add_chicken(&testFarm, "Yasmin");
 
-    milk_cow(&testFarm.CowList, 5);
-    milk_cow(&testFarm.CowList->Flink, 3);
+    milk_cow(&testFarm.CowHead, 5);
+    milk_cow(&testFarm.CowHead->Flink, 3);
 
-    collect_eggs(&testFarm.ChickenList, 6);
-    collect_eggs(&testFarm.ChickenList->Flink, 4);
+    collect_eggs(&testFarm.ChickenHead, 6);
+    collect_eggs(&testFarm.ChickenHead->Flink, 4);
 
     display_farm(&testFarm);
 
